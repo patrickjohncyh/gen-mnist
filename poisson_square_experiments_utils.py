@@ -51,7 +51,8 @@ def create_uniform_grid(n, device='cpu', perturb=0.,
             y = j/(n-1.)
             node_pos.append([x+np.random.normal()*perturb,
                 y+np.random.normal()*perturb])
-    node_pos = torch.FloatTensor(np.stack(node_pos, 0)).cuda()
+    # node_pos = torch.FloatTensor(np.stack(node_pos, 0)).cuda()
+    node_pos = torch.FloatTensor(np.stack(node_pos, 0))
     if learnable: node_pos = torch.nn.Parameter(node_pos)
     edges = []
     N = n*n
