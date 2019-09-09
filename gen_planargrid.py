@@ -23,7 +23,8 @@ class GENPlanarGrid(GEN):
         #Take out batch dimension
         bs = 1 if len(x.shape) == 2 else x.shape[0]
         inps_per_elt, features = x.shape[-2], x.shape[-1]
-        pos = x.reshape(-1,features)[:,:2]
+
+        pos = x.reshape(features,-1)
         #Find the correct square
         nx = torch.nn.functional.relu(
           (pos[:,0]-self._EPS)/grid_info['dx']).floor_().long()
@@ -50,15 +51,17 @@ class GENPlanarGrid(GEN):
         top_right_score = torch.prod(torch.abs(bottom_left - pos)/dd, dim=1)
         scores = torch.zeros(pos.shape[0], node_pos.shape[0]).to(device=dd.device)
         scores.scatter_(dim=1, index=torch.unsqueeze(bottom_left_idx, dim=1),
-        src=torch.unsqueeze(bottom_left_score, dim=1))
+                        src=torch.unsqueeze(bottom_left_score, dim=1))
         scores.scatter_(dim=1, index=torch.unsqueeze(bottom_right_idx, dim=1),
-        src=torch.unsqueeze(bottom_right_score, dim=1))
+                        src=torch.unsqueeze(bottom_right_score, dim=1))
         scores.scatter_(dim=1, index=torch.unsqueeze(top_left_idx, dim=1),
-        src=torch.unsqueeze(top_left_score, dim=1))
+                        src=torch.unsqueeze(top_left_score, dim=1)) 
         scores.scatter_(dim=1, index=torch.unsqueeze(top_right_idx, dim=1),
-        src=torch.unsqueeze(top_right_score, dim=1))
-        return scores.reshape((bs, inps_per_elt, -1))
+                        src=torch.unsqueeze(top_right_score, dim=1))
+
+        return scores.reshape((bs, 784, -1))
 
     def forward(self, Inp, Q, G=None, msg_steps=None, repr_fn_args={}):
-        if G is not None: self.set_grid_info(G.grid_info)
-        return super(GENPlanarGrid, self).__init__(**kwargs)
+        if G is not None: self.set_grid_info(G.grid)
+        # return super(GENPlanarGrid, self).__init__(**kwargs)
+        return super(GENPlanarGrid, self).forward(Inp, Q, G, repr_fn_args)
