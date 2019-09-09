@@ -22,9 +22,10 @@ class GENPlanarGrid(GEN):
         assert grid_info is not None
         #Take out batch dimension
         bs = 1 if len(x.shape) == 2 else x.shape[0]
+
         inps_per_elt, features = x.shape[-2], x.shape[-1]
 
-        pos = x.reshape(features,-1)
+        pos = x.reshape(features*bs,-1)
         #Find the correct square
         nx = torch.nn.functional.relu(
           (pos[:,0]-self._EPS)/grid_info['dx']).floor_().long()

@@ -49,29 +49,24 @@ class GEN(nn.Module):
             if self.msg_steps is not None: msg_steps = self.msg_steps
             else: msg_steps = G.num_nodes*2-1
 
-
         # Encode all inputs
         inputs = [] #(BS, #inp, feat)
         enc = self.encoders[0] # share the same encoder for all points?
         for inp in Inp:
             res = torch.cat((inp[0], inp[1]), dim=-1)
             inputs.append(res)
-        inputs = torch.cat([i.view(1,3) for i in inputs],dim=0)       
-        # for inp in Inp:
-        #     res = (enc(torch.cat((inp[0], inp[1]), dim=-1)))
-        #     inputs.append(res)
-
+        inputs = torch.cat([i.view(1,3) for i in inputs],dim=0).view(-1,784,3)
         inputs = enc(inputs)
+        bs = inputs.shape[0]
 
-        inputs = torch.cat([inp.view(self.encoders[0].layers[-1].out_features,1) for inp in inputs], dim=1)
-        x_inp = torch.cat([inp[0].view(2,1) for inp in Inp], dim=1)
-
+        # inputs = torch.cat([inp.view(self.encoders[0].layers[-1].out_features,1) for inp in inputs], dim=1)
+        x_inp = torch.cat([inp[0].view(2,1) for inp in Inp], dim=1).view(bs,2,-1)
     
 
         # Initialize GNN node states with representation function
         inp_coord = self.repr_fn(G.pos, x_inp, **repr_fn_args) 
-
-        G.x = torch.bmm(torch.transpose(inp_coord, 1, 2), torch.unsqueeze(torch.t(inputs),0))
+ 
+        G.x = torch.bmm(torch.transpose(inp_coord, 1, 2), inputs)
         bs,num_nodes, f = G.x.shape
 
 
@@ -79,6 +74,7 @@ class GEN(nn.Module):
         # Create Batch to feed to GNN
         data_list = [Data(x=x.squeeze(0), pos=G.pos, edge_index=G.edge_index)
                 for x in torch.split(G.x,split_size_or_sections=1,dim=0)]
+        
         SG = Batch.from_data_list(data_list)
 
         # Propagate GNN states with message passing
@@ -86,13 +82,11 @@ class GEN(nn.Module):
             SG.x = self.layer_norm(SG.x + self.conv(
                 torch.cat((SG.pos, SG.x), dim=-1), SG.edge_index))
         G.x = SG.x.reshape((SG.num_graphs,-1,f))
-
-        mean_feat_vec = torch.mean(G.x.view(1,num_nodes,self.encoders[0].layers[-1].out_features),1)
+        
+        mean_feat_vec = torch.mean(G.x.view(bs,num_nodes,self.encoders[0].layers[-1].out_features),1)
         dec = self.decoders[0]
-        res = []
-        res.append(dec(mean_feat_vec))
-
-        return torch.cat(res,dim=0)
+        res = dec(mean_feat_vec)
+        return res
 
         # queries = [] #(BS, #out, feat)
         # # Decode hidden states to final outputs

@@ -23,10 +23,10 @@ torch.manual_seed(0)
 cuda = torch.cuda.is_available()
 device = torch.device('cuda') if cuda else torch.device('cpu')
 model_type = 'GENPlanarGrid' #['GENSoftNN', 'GENPlanarGrid', 'NP'][0]
-bs = 32
+bs = 128
 k = 32
 node_train = 16
-sqrt_num_nodes_list = [3,3,4,5,6,7]
+sqrt_num_nodes_list = [4]#[4,3,4,5,6,7]
 copies_per_graph = 1
 opt_nodes = False
 slow_opt_nodes = False #Train node_pos only in part of each "house" data;slower
@@ -40,9 +40,9 @@ transform = transforms.Compose([transforms.ToTensor(),
 train_dataset = datasets.MNIST('mnist_trainset', download=True, train=True, transform=transform)
 test_dataset = datasets.MNIST('mnist_testset', download=True, train=False,transform=transform)
 
-train_loader = DataLoader(train_dataset, batch_size=1, num_workers=8,
+train_loader = DataLoader(train_dataset, batch_size=bs, num_workers=8,
         shuffle=True, drop_last=False)
-test_loader = DataLoader(test_dataset,  batch_size=1, num_workers=8,
+test_loader = DataLoader(test_dataset,  batch_size=bs, num_workers=8,
         shuffle=True, drop_last=False)
 
 ## Data Visualisation
@@ -68,7 +68,7 @@ mesh_list, mesh_params = create_mesh_list(
         copies_per_graph=copies_per_graph, device=device)
 max_mesh_list_elts = max([len(aux) for aux in mesh_list])
 if cuda: model.cuda()
-opt = torch.optim.Adam(params=model.parameters(), lr=3e-2)
+opt = torch.optim.Adam(params=model.parameters(), lr=3e-3)
 if len(mesh_params):
     mesh_opt = torch.optim.Adam(params=mesh_params, lr=3e-4)
 else: mesh_opt = None
@@ -78,12 +78,12 @@ else: writer = None
 
 
 
-coords = [(x/27.0,y/27.0) for x in range(0,28,1) for y in range(0,28,1) ]
+coords = [(x/27.0,y/27.0) for x in range(0,28,1) for y in range(0,28,1) ]*bs
 coords = torch.Tensor(coords)
 if cuda:
     coords = coords.cuda()
 
-for epoch in Tqdm(range(1), position=0):
+for epoch in Tqdm(range(10), position=0):
     train_loss = 0. ;  test_loss = 0.
     train_graphs = 0 ; test_graphs = 0
     train_loss_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
@@ -97,11 +97,9 @@ for epoch in Tqdm(range(1), position=0):
             if cuda:
                 Inp = Inp.cuda()
                 Out = Out.cuda()
-                    
-
             if len(mesh_list[idx]) <= g_idx: continue
             G = mesh_list[idx][g_idx]
-            Inp = [(c,v) for c,v in zip(coords,Inp.view(28*28,1))]
+            Inp = [(c,v) for c,v in zip(coords,Inp.view(-1,1))]
             Q = None
             targets = Out
             train_graphs += 1
@@ -142,13 +140,14 @@ for epoch in Tqdm(range(1), position=0):
                     torch.max(torch.abs(G.pos - G.ini_pos)).item())
             train_loss_summ[G.num_nodes][1] += 1
             pos_change_summ[G.num_nodes][1] += 1
-            if (cnt % bs == bs-1) or (cnt == len(train_loader)-1):
-                opt.step()
-                opt.zero_grad()
-                num = sqrt_num_nodes_list[g_idx]
-                print('train/loss-'+str(num**2),
-                    train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
-                    (cnt+1)/bs)
+            # if (cnt % bs == bs-1) or (cnt == len(train_loader)-1):
+
+            opt.step()
+            opt.zero_grad()
+            num = sqrt_num_nodes_list[g_idx]
+            print('train/loss-'+str(num**2),
+                train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
+                (cnt+1))
 
 
 
@@ -157,7 +156,7 @@ for epoch in Tqdm(range(1), position=0):
             writer.add_scalar('train/loss-'+str(num**2),
                     train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
                     epoch)
-            print('train/loss-'+str(num**2),
+            print('EPOCH --- train/loss-'+str(num**2),
                     train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
                     epoch)
 
