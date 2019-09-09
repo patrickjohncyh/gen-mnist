@@ -95,10 +95,9 @@ for epoch in Tqdm(range(1), position=0):
         idx = 0
         for cnt, (Inp,Out) in enumerate(train_loader):
             if cuda:
-                for d in Out:
-                    d[0] = d[0].cuda()
-                for d in Inp:
-                    d[0] = d[0].cuda()
+                Inp = Inp.cuda()
+                Out = Out.cuda()
+                    
 
             if len(mesh_list[idx]) <= g_idx: continue
             G = mesh_list[idx][g_idx]
