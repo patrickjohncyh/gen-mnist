@@ -54,8 +54,14 @@ class GEN(nn.Module):
         inputs = [] #(BS, #inp, feat)
         enc = self.encoders[0] # share the same encoder for all points?
         for inp in Inp:
-            res = (enc(torch.cat((inp[0], inp[1]), dim=-1)))
+            res = torch.cat((inp[0], inp[1]), dim=-1)
             inputs.append(res)
+        inputs = torch.cat([i.view(1,3) for i in inputs],dim=0)       
+        # for inp in Inp:
+        #     res = (enc(torch.cat((inp[0], inp[1]), dim=-1)))
+        #     inputs.append(res)
+
+        inputs = enc(inputs)
 
         inputs = torch.cat([inp.view(self.encoders[0].layers[-1].out_features,1) for inp in inputs], dim=1)
         x_inp = torch.cat([inp[0].view(2,1) for inp in Inp], dim=1)
