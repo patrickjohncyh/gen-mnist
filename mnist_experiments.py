@@ -83,7 +83,7 @@ coords = torch.Tensor(coords)
 if cuda:
     coords = coords.cuda()
 
-for epoch in Tqdm(range(10), position=0):
+for epoch in Tqdm(range(100), position=0):
     train_loss = 0. ;  test_loss = 0.
     train_graphs = 0 ; test_graphs = 0
     train_loss_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
@@ -95,7 +95,7 @@ for epoch in Tqdm(range(10), position=0):
         idx = 0
         for cnt, (Inp,Out) in enumerate(train_loader):
 
-            start = time.time() 
+            # start = time.time() 
             
             if cuda:
                 Inp = Inp.cuda()
@@ -144,7 +144,7 @@ for epoch in Tqdm(range(10), position=0):
             train_loss_summ[G.num_nodes][1] += 1
             pos_change_summ[G.num_nodes][1] += 1
             
-            print('Elapsed time : ',time.time()-start)
+            # print('Elapsed time : ',time.time()-start)
             opt.step()
             opt.zero_grad()
             num = sqrt_num_nodes_list[g_idx]
@@ -159,7 +159,7 @@ for epoch in Tqdm(range(10), position=0):
             writer.add_scalar('train/loss-'+str(num**2),
                     train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
                     epoch)
-            print('EPOCH --- train/loss-'+str(num**2),
+            print('EPOCH '+epoch+'--- train/loss-'+str(num**2),
                     train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
                     epoch)
 
