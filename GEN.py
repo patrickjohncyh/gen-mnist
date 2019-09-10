@@ -87,9 +87,9 @@ class GEN(nn.Module):
             SG.x = self.layer_norm(SG.x + self.conv(
                 torch.cat((SG.pos, SG.x), dim=-1), SG.edge_index))
         G.x = SG.x.reshape((SG.num_graphs,-1,f))
-        
+        mean_feat_vec = torch.mean(F.normalize(G.x.view(bs,num_nodes,self.encoders[0].layers[-1].out_features),p=2,dim=2),1)
 
-        mean_feat_vec = torch.mean(G.x.view(bs,num_nodes,self.encoders[0].layers[-1].out_features),1)
+
         dec = self.decoders[0]
         res = dec(mean_feat_vec)
         return res
