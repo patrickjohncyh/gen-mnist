@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import torch
 from torch import nn
@@ -52,24 +53,28 @@ class GEN(nn.Module):
         # Encode all inputs
         inputs = [] #(BS, #inp, feat)
         enc = self.encoders[0] # share the same encoder for all points?
-        for inp in Inp:
-            res = torch.cat((inp[0], inp[1]), dim=-1)
-            inputs.append(res)
-        inputs = torch.cat([i.view(1,3) for i in inputs],dim=0).view(-1,784,3)
+        coords = Inp[0]
+        Inp    = Inp[1]
+        bs = Inp.shape[0]
+        nc = coords.shape[0] # num_coords
+
+        # for inp in Inp:
+        #     res = torch.cat((inp[0], inp[1]), dim=-1)
+        #     inputs.append(res)
+        # inputs = torch.cat([i.view(1,3) for i in inputs],dim=0).view(-1,784,3)
+
+        inputs = torch.cat((Inp.view(-1,nc,1),coords.repeat(bs,1).view(bs,-1,2)),2)
         inputs = enc(inputs)
-        bs = inputs.shape[0]
 
         # inputs = torch.cat([inp.view(self.encoders[0].layers[-1].out_features,1) for inp in inputs], dim=1)
-        x_inp = torch.cat([inp[0].view(2,1) for inp in Inp], dim=1).view(bs,2,-1)
-    
+        # x_inp = torch.cat([inp[0].view(2,1) for inp in Inp], dim=1).view(bs,2,-1)
+        x_inp = torch.t(coords)
 
         # Initialize GNN node states with representation function
-        inp_coord = self.repr_fn(G.pos, x_inp, **repr_fn_args) 
- 
+        inp_coord = self.repr_fn(G.pos, x_inp, **repr_fn_args).view(nc,-1).repeat(bs,1).view(bs,nc,-1)
+
         G.x = torch.bmm(torch.transpose(inp_coord, 1, 2), inputs)
         bs,num_nodes, f = G.x.shape
-
-
 
         # Create Batch to feed to GNN
         data_list = [Data(x=x.squeeze(0), pos=G.pos, edge_index=G.edge_index)
@@ -83,19 +88,20 @@ class GEN(nn.Module):
                 torch.cat((SG.pos, SG.x), dim=-1), SG.edge_index))
         G.x = SG.x.reshape((SG.num_graphs,-1,f))
         
+
         mean_feat_vec = torch.mean(G.x.view(bs,num_nodes,self.encoders[0].layers[-1].out_features),1)
         dec = self.decoders[0]
         res = dec(mean_feat_vec)
         return res
 
-        # queries = [] #(BS, #out, feat)
-        # # Decode hidden states to final outputs
-        # res = []
-        # for (q, dec) in zip(Q, self.decoders):
-        #     q_coord = self.repr_fn(G.pos, q, **repr_fn_args)
-        #     lat = torch.bmm(q_coord, G.x)
-        #     res.append(dec(torch.cat((lat, q), dim=-1)))
-        # return res
+        # # queries = [] #(BS, #out, feat)
+        # # # Decode hidden states to final outputs
+        # # res = []
+        # # for (q, dec) in zip(Q, self.decoders):
+        # #     q_coord = self.repr_fn(G.pos, q, **repr_fn_args)
+        # #     lat = torch.bmm(q_coord, G.x)
+        # #     res.append(dec(torch.cat((lat, q), dim=-1)))
+        # # return res
 
     def repr_fn(self, **kwargs):
         raise NotImplementedError("the default GEN class doesn't have \

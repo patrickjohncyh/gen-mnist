@@ -26,7 +26,7 @@ model_type = 'GENPlanarGrid' #['GENSoftNN', 'GENPlanarGrid', 'NP'][0]
 bs = 128
 k = 32
 node_train = 16
-sqrt_num_nodes_list = [4]#[4,3,4,5,6,7]
+sqrt_num_nodes_list = [6]#[4,3,4,5,6,7]
 copies_per_graph = 1
 opt_nodes = False
 slow_opt_nodes = False #Train node_pos only in part of each "house" data;slower
@@ -78,7 +78,7 @@ else: writer = None
 
 
 
-coords = [(x/27.0,y/27.0) for x in range(0,28,1) for y in range(0,28,1) ]*bs
+coords = [(x/27.0,y/27.0) for x in range(0,28,1) for y in range(0,28,1)]
 coords = torch.Tensor(coords)
 if cuda:
     coords = coords.cuda()
@@ -94,15 +94,21 @@ for epoch in Tqdm(range(10), position=0):
     for g_idx in Tqdm(range(max_mesh_list_elts), position=1):
         idx = 0
         for cnt, (Inp,Out) in enumerate(train_loader):
+
+            # start = time.time() 
+            # print('Elapsed time : ',time.time()-start)
             if cuda:
                 Inp = Inp.cuda()
                 Out = Out.cuda()
             if len(mesh_list[idx]) <= g_idx: continue
             G = mesh_list[idx][g_idx]
-            Inp = [(c,v) for c,v in zip(coords,Inp.view(-1,1))]
+
+            Inp = (coords,Inp)
             Q = None
             targets = Out
             train_graphs += 1
+            
+
             if slow_opt_nodes:
                 FInp = [[inp[0][:node_train], inp[1][:node_train]]
                         for inp in Inp]
@@ -130,9 +136,6 @@ for epoch in Tqdm(range(10), position=0):
             else:
                 preds = model(Inp, Q, G=G)
                 loss  = loss_fn(preds,targets)
-                # losses = [loss_fn(pred, target).unsqueeze(0)
-                    # for (pred, target) in zip(preds, targets)]
-                # loss = torch.sum(torch.cat(losses))
             loss.backward()
             train_loss += loss.item()
             train_loss_summ[G.num_nodes][0] += loss.item()
@@ -140,7 +143,7 @@ for epoch in Tqdm(range(10), position=0):
                     torch.max(torch.abs(G.pos - G.ini_pos)).item())
             train_loss_summ[G.num_nodes][1] += 1
             pos_change_summ[G.num_nodes][1] += 1
-            # if (cnt % bs == bs-1) or (cnt == len(train_loader)-1):
+
 
             opt.step()
             opt.zero_grad()
