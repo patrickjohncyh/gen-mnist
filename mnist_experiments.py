@@ -93,6 +93,10 @@ for epoch in Tqdm(range(100), position=0):
     test_loss_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
     pos_change_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
 
+    train_accy_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
+    test_accy_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
+    
+
     # Train Set
     for g_idx in Tqdm(range(max_mesh_list_elts), position=1):
         idx = 0
@@ -139,6 +143,12 @@ for epoch in Tqdm(range(100), position=0):
             else:
                 preds = model(Inp, Q, G=G)
                 loss  = loss_fn(preds,targets)
+                accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/bs
+                train_accy_summ[G.num_nodes][0] += accy
+                train_accy_summ[G.num_nodes][1] += 1
+                
+
+
             loss.backward()
             train_loss += loss.item()
             train_loss_summ[G.num_nodes][0] += loss.item()
@@ -154,6 +164,9 @@ for epoch in Tqdm(range(100), position=0):
             if (cnt % 32 == 32-1) or (cnt == len(train_loader)-1):
                 print('train/loss-'+str(num**2),
                     train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
+                    (cnt+1))
+                print('train/accy-'+str(num**2),
+                    train_accy_summ[num**2][0]/train_accy_summ[num**2][1],
                     (cnt+1))
 
     if do_tensorboard:
@@ -196,6 +209,9 @@ for epoch in Tqdm(range(100), position=0):
             else:
                 preds = model(Inp, Q, G=G)
                 loss  = loss_fn(preds,targets)
+                accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/bs
+                test_accy_summ[G.num_nodes][0] += accy
+                test_accy_summ[G.num_nodes][1] += 1
             test_loss += loss.item()
             test_graphs += 1
             test_loss_summ[G.num_nodes][0] += loss.item()
@@ -218,10 +234,17 @@ for epoch in Tqdm(range(100), position=0):
         print(round(train_loss/(max_mesh_list_elts * train_size), 3),
             round(test_loss/(max_mesh_list_elts * test_size), 3))
     
+    print('train/loss-'+str(num**2),
+        train_loss_summ[num**2][0]/train_loss_summ[num**2][1],epoch)
     print('test/loss-'+str(num**2),
             test_loss_summ[num**2][0]/test_loss_summ[num**2][1],epoch)
-    print('train/loss-'+str(num**2),
-            train_loss_summ[num**2][0]/train_loss_summ[num**2][1],epoch)
+
+
+    print('train/accy-'+str(num**2),
+            train_accy_summ[num**2][0]/train_accy_summ[num**2][1],epoch)
+    print('test/accy-'+str(num**2),
+            test_accy_summ[num**2][0]/test_accy_summ[num**2][1],epoch)
+
     # # Test Set
     # for cnt, ((Inp,Out),idx) in Tqdm(enumerate(test_loader), position=1):
     #     if cuda:
