@@ -95,8 +95,8 @@ for epoch in Tqdm(range(10), position=0):
         idx = 0
         for cnt, (Inp,Out) in enumerate(train_loader):
 
-            # start = time.time() 
-            # print('Elapsed time : ',time.time()-start)
+            start = time.time() 
+            
             if cuda:
                 Inp = Inp.cuda()
                 Out = Out.cuda()
@@ -143,8 +143,8 @@ for epoch in Tqdm(range(10), position=0):
                     torch.max(torch.abs(G.pos - G.ini_pos)).item())
             train_loss_summ[G.num_nodes][1] += 1
             pos_change_summ[G.num_nodes][1] += 1
-
-
+            
+            print('Elapsed time : ',time.time()-start)
             opt.step()
             opt.zero_grad()
             num = sqrt_num_nodes_list[g_idx]
