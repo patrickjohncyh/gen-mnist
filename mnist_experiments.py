@@ -148,9 +148,10 @@ for epoch in Tqdm(range(100), position=0):
             opt.step()
             opt.zero_grad()
             num = sqrt_num_nodes_list[g_idx]
-            print('train/loss-'+str(num**2),
-                train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
-                (cnt+1))
+            if (cnt % 32 == 32-1) or (cnt == len(train_loader)-1):
+                print('train/loss-'+str(num**2),
+                    train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
+                    (cnt+1))
 
 
 
@@ -159,7 +160,7 @@ for epoch in Tqdm(range(100), position=0):
             writer.add_scalar('train/loss-'+str(num**2),
                     train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
                     epoch)
-            print('EPOCH '+epoch+'--- train/loss-'+str(num**2),
+            print('EPOCH '+str(epoch)+'--- train/loss-'+str(num**2),
                     train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
                     epoch)
 
