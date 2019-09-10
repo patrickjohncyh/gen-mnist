@@ -40,6 +40,9 @@ transform = transforms.Compose([transforms.ToTensor(),
 train_dataset = datasets.MNIST('mnist_trainset', download=True, train=True, transform=transform)
 test_dataset = datasets.MNIST('mnist_testset', download=True, train=False,transform=transform)
 
+train_size = len(train_dataset)
+test_size = len(test_dataset)
+
 train_loader = DataLoader(train_dataset, batch_size=bs, num_workers=8,
         shuffle=True, drop_last=False)
 test_loader = DataLoader(test_dataset,  batch_size=bs, num_workers=8,
@@ -153,8 +156,6 @@ for epoch in Tqdm(range(100), position=0):
                     train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
                     (cnt+1))
 
-
-
     if do_tensorboard:
         for num in sqrt_num_nodes_list:
             writer.add_scalar('train/loss-'+str(num**2),
@@ -165,61 +166,115 @@ for epoch in Tqdm(range(100), position=0):
                     epoch)
 
 
-# #     # Test Set
-# #     for cnt, ((Inp,Out),idx) in Tqdm(enumerate(test_loader), position=1):
-# #         if cuda:
-# #             for d in Out:
-# #                 d[0] = d[0].cuda()
-# #                 d[1] = d[1].cuda()
-# #             for d in Inp:
-# #                 d[0] = d[0].cuda()
-# #                 d[1] = d[1].cuda()
-# #         for d in Inp:
-# #             d[0] = d[0].view([-1] + list(d[0].shape[2:]))
-# #             d[1] = d[1].view([-1] + list(d[1].shape[2:]))
-# #         for d in Out:
-# #             d[0] = d[0].view([-1] + list(d[0].shape[2:]))
-# #             d[1] = d[1].view([-1] + list(d[1].shape[2:]))
-# #         Q = [o[0] for o in Out]
-# #         targets = [o[1] for o in Out]
-# #         for g_idx, G in enumerate(mesh_list[idx]):
-# #             if model_type == 'NP': preds = model(Inp, Q)
-# #             else: preds = model(Inp, Q, G=G)
-# #             if opt_nodes:
-# #                 finetune_losses = [loss_fn(pred[:node_train],
-# #                     target[:node_train]).unsqueeze(0)
-# #                     for (pred, target) in zip(preds, targets)]
-# #                 finetune_loss = torch.sum(torch.cat(finetune_losses))
-# #                 exec_losses = [loss_fn(pred[node_train:],
-# #                     target[node_train:]).unsqueeze(0)
-# #                     for (pred, target) in zip(preds, targets)]
-# #                 exec_loss = torch.sum(torch.cat(exec_losses))
-# #                 finetune_loss.backward()
-# #                 loss = exec_loss
-# #             else:
-# #                 losses = [loss_fn(pred, target).unsqueeze(0)
-# #                     for (pred, target) in zip(preds, targets)]
-# #                 loss = torch.sum(torch.cat(losses))
-# #             test_loss += loss.item()
-# #             test_graphs += 1
-# #             test_loss_summ[G.num_nodes][0] += loss.item()
-# #             test_loss_summ[G.num_nodes][1] += 1
-# #     opt.zero_grad() #Don't train Theta on finetune test set when optmizing nodes
-# #     if mesh_opt is not None:
-# #         mesh_opt.step()
-# #         mesh_opt.zero_grad()
-# #         update_meshes_after_opt(mesh_list, epoch=epoch, writer=writer)
-# #     if do_tensorboard:
-# #         for num in sqrt_num_nodes_list:
-# #             writer.add_scalar('test/loss-'+str(num**2),
-# #                     test_loss_summ[num**2][0]/test_loss_summ[num**2][1],epoch)
-# #             if opt_nodes:
-# #                 writer.add_scalar('pos_change-'+str(num**2),
-# #                         pos_change_summ[num**2][0]/pos_change_summ[num**2][1],
-# #                         epoch)
-# #     else:
-# #         print(round(train_loss/(max_mesh_list_elts * train_size), 3),
-# #             round(test_loss/(max_mesh_list_elts * test_size), 3))
+    # Test Set
+    for g_idx in Tqdm(range(max_mesh_list_elts), position=1):
+        idx = 0
+        for cnt, (Inp,Out) in enumerate(test_loader):
+            
+            if cuda:
+                Inp = Inp.cuda()
+                Out = Out.cuda()
+            if len(mesh_list[idx]) <= g_idx: continue
+            G = mesh_list[idx][g_idx]
+
+            Inp = (coords,Inp)
+            Q = None
+            targets = Out
+            train_graphs += 1
+            
+            if opt_nodes:
+                finetune_losses = [loss_fn(pred[:node_train],
+                    target[:node_train]).unsqueeze(0)
+                    for (pred, target) in zip(preds, targets)]
+                finetune_loss = torch.sum(torch.cat(finetune_losses))
+                exec_losses = [loss_fn(pred[node_train:],
+                    target[node_train:]).unsqueeze(0)
+                    for (pred, target) in zip(preds, targets)]
+                exec_loss = torch.sum(torch.cat(exec_losses))
+                finetune_loss.backward()
+                loss = exec_loss
+            else:
+                preds = model(Inp, Q, G=G)
+                loss  = loss_fn(preds,targets)
+            test_loss += loss.item()
+            test_graphs += 1
+            test_loss_summ[G.num_nodes][0] += loss.item()
+            test_loss_summ[G.num_nodes][1] += 1
+    opt.zero_grad() #Don't train Theta on finetune test set when optmizing nodes
+    if mesh_opt is not None:
+        mesh_opt.step()
+        mesh_opt.zero_grad()
+        update_meshes_after_opt(mesh_list, epoch=epoch, writer=writer)
+
+    if do_tensorboard:
+        for num in sqrt_num_nodes_list:
+            writer.add_scalar('test/loss-'+str(num**2),
+                    test_loss_summ[num**2][0]/test_loss_summ[num**2][1],epoch)
+            if opt_nodes:
+                writer.add_scalar('pos_change-'+str(num**2),
+                        pos_change_summ[num**2][0]/pos_change_summ[num**2][1],
+                        epoch)
+    else:
+        print(round(train_loss/(max_mesh_list_elts * train_size), 3),
+            round(test_loss/(max_mesh_list_elts * test_size), 3))
+    
+    print(round(train_loss/(max_mesh_list_elts * train_size), 3),
+          round(test_loss/(max_mesh_list_elts * test_size), 3))
+    # # Test Set
+    # for cnt, ((Inp,Out),idx) in Tqdm(enumerate(test_loader), position=1):
+    #     if cuda:
+    #         for d in Out:
+    #             d[0] = d[0].cuda()
+    #             d[1] = d[1].cuda()
+    #         for d in Inp:
+    #             d[0] = d[0].cuda()
+    #             d[1] = d[1].cuda()
+    #     for d in Inp:
+    #         d[0] = d[0].view([-1] + list(d[0].shape[2:]))
+    #         d[1] = d[1].view([-1] + list(d[1].shape[2:]))
+    #     for d in Out:
+    #         d[0] = d[0].view([-1] + list(d[0].shape[2:]))
+    #         d[1] = d[1].view([-1] + list(d[1].shape[2:]))
+    #     Q = [o[0] for o in Out]
+    #     targets = [o[1] for o in Out]
+    #     for g_idx, G in enumerate(mesh_list[idx]):
+    #         if model_type == 'NP': preds = model(Inp, Q)
+    #         else: preds = model(Inp, Q, G=G)
+    #         if opt_nodes:
+    #             finetune_losses = [loss_fn(pred[:node_train],
+    #                 target[:node_train]).unsqueeze(0)
+    #                 for (pred, target) in zip(preds, targets)]
+    #             finetune_loss = torch.sum(torch.cat(finetune_losses))
+    #             exec_losses = [loss_fn(pred[node_train:],
+    #                 target[node_train:]).unsqueeze(0)
+    #                 for (pred, target) in zip(preds, targets)]
+    #             exec_loss = torch.sum(torch.cat(exec_losses))
+    #             finetune_loss.backward()
+    #             loss = exec_loss
+    #         else:
+    #             losses = [loss_fn(pred, target).unsqueeze(0)
+    #                 for (pred, target) in zip(preds, targets)]
+    #             loss = torch.sum(torch.cat(losses))
+    #         test_loss += loss.item()
+    #         test_graphs += 1
+    #         test_loss_summ[G.num_nodes][0] += loss.item()
+    #         test_loss_summ[G.num_nodes][1] += 1
+    # opt.zero_grad() #Don't train Theta on finetune test set when optmizing nodes
+    # if mesh_opt is not None:
+    #     mesh_opt.step()
+    #     mesh_opt.zero_grad()
+    #     update_meshes_after_opt(mesh_list, epoch=epoch, writer=writer)
+    # if do_tensorboard:
+    #     for num in sqrt_num_nodes_list:
+    #         writer.add_scalar('test/loss-'+str(num**2),
+    #                 test_loss_summ[num**2][0]/test_loss_summ[num**2][1],epoch)
+    #         if opt_nodes:
+    #             writer.add_scalar('pos_change-'+str(num**2),
+    #                     pos_change_summ[num**2][0]/pos_change_summ[num**2][1],
+    #                     epoch)
+    # else:
+    #     print(round(train_loss/(max_mesh_list_elts * train_size), 3),
+    #         round(test_loss/(max_mesh_list_elts * test_size), 3))
 
 
 
