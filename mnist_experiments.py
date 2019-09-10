@@ -24,9 +24,9 @@ cuda = torch.cuda.is_available()
 device = torch.device('cuda') if cuda else torch.device('cpu')
 model_type = 'GENPlanarGrid' #['GENSoftNN', 'GENPlanarGrid', 'NP'][0]
 bs = 128
-k = 32
+k = 128
 node_train = 16
-sqrt_num_nodes_list = [6]#[4,3,4,5,6,7]
+sqrt_num_nodes_list = [5]#[4,3,4,5,6,7]
 copies_per_graph = 1
 opt_nodes = False
 slow_opt_nodes = False #Train node_pos only in part of each "house" data;slower
@@ -56,8 +56,8 @@ test_loader = DataLoader(test_dataset,  batch_size=bs, num_workers=8,
 # print(labels)
 # plt.imsave('mnist_test.png',images[0].numpy().squeeze(), cmap='gray_r');
 
-encoders = nn.ModuleList([Net(dims=[3,k,k])])
-decoders = nn.ModuleList([Net(dims=[k,10])])
+encoders = nn.ModuleList([Net(dims=[3,k,k,k])])
+decoders = nn.ModuleList([Net(dims=[k,k,10])])
 loss_fn = nn.CrossEntropyLoss()
 
 
