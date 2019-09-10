@@ -56,8 +56,8 @@ test_loader = DataLoader(test_dataset,  batch_size=bs, num_workers=8,
 # print(labels)
 # plt.imsave('mnist_test.png',images[0].numpy().squeeze(), cmap='gray_r');
 
-encoders = nn.ModuleList([Net(dims=[3,k,k,k])])
-decoders = nn.ModuleList([Net(dims=[k,k,k,10])])
+encoders = nn.ModuleList([Net(dims=[3,k,k])])
+decoders = nn.ModuleList([Net(dims=[k,10])])
 loss_fn = nn.CrossEntropyLoss()
 
 
@@ -98,9 +98,9 @@ for epoch in Tqdm(range(100), position=0):
     
 
     # Train Set
-    for g_idx in Tqdm(range(max_mesh_list_elts), position=1):
+    for g_idx in (range(max_mesh_list_elts)):
         idx = 0
-        for cnt, (Inp,Out) in enumerate(train_loader):
+        for cnt, (Inp,Out) in enumerate(Tqdm(train_loader)):
 
             # start = time.time() 
             
@@ -162,6 +162,7 @@ for epoch in Tqdm(range(100), position=0):
             opt.zero_grad()
             num = sqrt_num_nodes_list[g_idx]
             if (cnt % 32 == 32-1) or (cnt == len(train_loader)-1):
+                print('')
                 print('train/loss-'+str(num**2),
                     train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
                     (cnt+1))

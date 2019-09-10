@@ -40,6 +40,8 @@ class GEN(nn.Module):
         Inp: list of input points (X, y_i) of function i
         Q:   list of queries X for function j
         '''
+        # start = time.time()
+
         if G is None: G = self.G
         else:
             G.num_feat = self.G.num_feat
@@ -82,11 +84,15 @@ class GEN(nn.Module):
         
         SG = Batch.from_data_list(data_list)
 
+        
+
         # Propagate GNN states with message passing
         for step in range(msg_steps):
             SG.x = self.layer_norm(SG.x + self.conv(
                 torch.cat((SG.pos, SG.x), dim=-1), SG.edge_index))
+        # print('Elapsed time : ',time.time()-start)
         G.x = SG.x.reshape((SG.num_graphs,-1,f))
+
         mean_feat_vec = torch.mean(F.normalize(G.x.view(bs,num_nodes,self.encoders[0].layers[-1].out_features),p=2,dim=2),1)
 
 

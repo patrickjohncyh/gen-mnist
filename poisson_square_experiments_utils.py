@@ -64,7 +64,7 @@ def create_uniform_grid(n, device='cpu', perturb=0.,
     data.pos = node_pos
     data.grid = {'X': 1, 'Y': 1, 'min_X' : 0, 'min_Y': 0,
             'dx':1/(n-1), 'dy':1/(n-1), 'n_x': n, 'n_y': n}
-    data.msg_steps = 2*n-1
+    data.msg_steps = n#2*n-1
     if perturb == 0.:
         for i in range(n):
             for j in range(n):
