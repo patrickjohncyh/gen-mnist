@@ -97,87 +97,87 @@ for epoch in Tqdm(range(100), position=0):
     test_accy_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
     
 
-    # # Train Set
-    # for g_idx in (range(max_mesh_list_elts)):
-    #     idx = 0
-    #     for cnt, (Inp,Out) in enumerate(Tqdm(train_loader)):
+    # Train Set
+    for g_idx in (range(max_mesh_list_elts)):
+        idx = 0
+        for cnt, (Inp,Out) in enumerate(Tqdm(train_loader)):
 
-    #         # start = time.time() 
+            # start = time.time() 
             
-    #         if cuda:
-    #             Inp = Inp.cuda()
-    #             Out = Out.cuda()
-    #         if len(mesh_list[idx]) <= g_idx: continue
-    #         G = mesh_list[idx][g_idx]
+            if cuda:
+                Inp = Inp.cuda()
+                Out = Out.cuda()
+            if len(mesh_list[idx]) <= g_idx: continue
+            G = mesh_list[idx][g_idx]
 
-    #         Inp = (coords,Inp)
-    #         Q = None
-    #         targets = Out
-    #         train_graphs += 1
+            Inp = (coords,Inp)
+            Q = None
+            targets = Out
+            train_graphs += 1
             
 
-    #         if slow_opt_nodes:
-    #             FInp = [[inp[0][:node_train], inp[1][:node_train]]
-    #                     for inp in Inp]
-    #             FQ = [q[:node_train] for q in Q]
-    #             EInp = [[inp[0][node_train:], inp[1][node_train:]]
-    #                     for inp in Inp]
-    #             EQ = [q[node_train:] for q in Q]
-    #             Fpreds = model(FInp, FQ, G=G)
-    #             Epreds = model(EInp, EQ, G=G)
-    #             finetune_losses = [loss_fn(pred,
-    #                 target[:node_train]).unsqueeze(0)
-    #                 for (pred, target) in zip(Fpreds, targets)]
-    #             finetune_loss = torch.sum(torch.cat(finetune_losses))
-    #             exec_losses = [loss_fn(pred,
-    #                 target[node_train:]).unsqueeze(0)
-    #                 for (pred, target) in zip(Epreds, targets)]
-    #             exec_loss = torch.sum(torch.cat(exec_losses))
-    #             mesh_opt.zero_grad()
-    #             finetune_loss.backward()
-    #             mesh_opt.step()
-    #             # project back to square
-    #             graph_update_meshes_after_opt(mesh_list[idx][g_idx],
-    #                     epoch=epoch, writer=writer)
-    #             loss = exec_loss
-    #         else:
-    #             preds = model(Inp, Q, G=G)
-    #             loss  = loss_fn(preds,targets)
-    #             accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/bs
-    #             train_accy_summ[G.num_nodes][0] += accy
-    #             train_accy_summ[G.num_nodes][1] += 1
+            if slow_opt_nodes:
+                FInp = [[inp[0][:node_train], inp[1][:node_train]]
+                        for inp in Inp]
+                FQ = [q[:node_train] for q in Q]
+                EInp = [[inp[0][node_train:], inp[1][node_train:]]
+                        for inp in Inp]
+                EQ = [q[node_train:] for q in Q]
+                Fpreds = model(FInp, FQ, G=G)
+                Epreds = model(EInp, EQ, G=G)
+                finetune_losses = [loss_fn(pred,
+                    target[:node_train]).unsqueeze(0)
+                    for (pred, target) in zip(Fpreds, targets)]
+                finetune_loss = torch.sum(torch.cat(finetune_losses))
+                exec_losses = [loss_fn(pred,
+                    target[node_train:]).unsqueeze(0)
+                    for (pred, target) in zip(Epreds, targets)]
+                exec_loss = torch.sum(torch.cat(exec_losses))
+                mesh_opt.zero_grad()
+                finetune_loss.backward()
+                mesh_opt.step()
+                # project back to square
+                graph_update_meshes_after_opt(mesh_list[idx][g_idx],
+                        epoch=epoch, writer=writer)
+                loss = exec_loss
+            else:
+                preds = model(Inp, Q, G=G)
+                loss  = loss_fn(preds,targets)
+                accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/bs
+                train_accy_summ[G.num_nodes][0] += accy
+                train_accy_summ[G.num_nodes][1] += 1
                 
 
 
-    #         loss.backward()
-    #         train_loss += loss.item()
-    #         train_loss_summ[G.num_nodes][0] += loss.item()
-    #         pos_change_summ[G.num_nodes][0] += (
-    #                 torch.max(torch.abs(G.pos - G.ini_pos)).item())
-    #         train_loss_summ[G.num_nodes][1] += 1
-    #         pos_change_summ[G.num_nodes][1] += 1
+            loss.backward()
+            train_loss += loss.item()
+            train_loss_summ[G.num_nodes][0] += loss.item()
+            pos_change_summ[G.num_nodes][0] += (
+                    torch.max(torch.abs(G.pos - G.ini_pos)).item())
+            train_loss_summ[G.num_nodes][1] += 1
+            pos_change_summ[G.num_nodes][1] += 1
             
-    #         # print('Elapsed time : ',time.time()-start)
-    #         opt.step()
-    #         opt.zero_grad()
-    #         num = sqrt_num_nodes_list[g_idx]
-    #         if (cnt % 32 == 32-1) or (cnt == len(train_loader)-1):
-    #             print('')
-    #             print('train/loss-'+str(num**2),
-    #                 train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
-    #                 (cnt+1))
-    #             print('train/accy-'+str(num**2),
-    #                 train_accy_summ[num**2][0]/train_accy_summ[num**2][1],
-    #                 (cnt+1))
+            # print('Elapsed time : ',time.time()-start)
+            opt.step()
+            opt.zero_grad()
+            num = sqrt_num_nodes_list[g_idx]
+            if (cnt % 32 == 32-1) or (cnt == len(train_loader)-1):
+                print('')
+                print('train/loss-'+str(num**2),
+                    train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
+                    (cnt+1))
+                print('train/accy-'+str(num**2),
+                    train_accy_summ[num**2][0]/train_accy_summ[num**2][1],
+                    (cnt+1))
 
-    # if do_tensorboard:
-    #     for num in sqrt_num_nodes_list:
-    #         writer.add_scalar('train/loss-'+str(num**2),
-    #                 train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
-    #                 epoch)
-    #         print('EPOCH '+str(epoch)+'--- train/loss-'+str(num**2),
-    #                 train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
-    #                 epoch)
+    if do_tensorboard:
+        for num in sqrt_num_nodes_list:
+            writer.add_scalar('train/loss-'+str(num**2),
+                    train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
+                    epoch)
+            print('EPOCH '+str(epoch)+'--- train/loss-'+str(num**2),
+                    train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
+                    epoch)
 
 
     # Test Set
@@ -241,14 +241,14 @@ for epoch in Tqdm(range(100), position=0):
         print(round(train_loss/(max_mesh_list_elts * train_size), 3),
             round(test_loss/(max_mesh_list_elts * test_size), 3))
     
-    # print('train/loss-'+str(num**2),
-        # train_loss_summ[num**2][0]/train_loss_summ[num**2][1],epoch)
+    print('train/loss-'+str(num**2),
+        train_loss_summ[num**2][0]/train_loss_summ[num**2][1],epoch)
     print('test/loss-'+str(num**2),
             test_loss_summ[num**2][0]/test_loss_summ[num**2][1],epoch)
 
 
-    # print('train/accy-'+str(num**2),
-            # train_accy_summ[num**2][0]/train_accy_summ[num**2][1],epoch)
+    print('train/accy-'+str(num**2),
+            train_accy_summ[num**2][0]/train_accy_summ[num**2][1],epoch)
     print('test/accy-'+str(num**2),
             test_accy_summ[num**2][0]/test_accy_summ[num**2][1],epoch)
 
