@@ -208,14 +208,17 @@ for epoch in Tqdm(range(100), position=0):
                 if(preds.shape[0]>node_train):
                     finetune_loss  = loss_fn(preds[:node_train],targets[:node_train])
                     exec_loss  = loss_fn(preds[node_train:],targets[node_train:])
+                    exec_accy  = ((torch.max(preds[node_train:],1)[1]-targets[node_train:])==0).sum().item()/pred[nnode_train:].shape[0]
                     finetune_loss.backward()
                     loss = exec_loss
+                    accy = exec_accy
             else:
                 loss  = loss_fn(preds,targets)
                 accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/pred.shape[0]
+
+            if(preds.shape[0]>node_train):
                 test_accy_summ[G.num_nodes][0] += accy
-                test_accy_summ[G.num_nodes][1] += 1
-            if(preds.shape[0]>node_train):    
+                test_accy_summ[G.num_nodes][1] += 1    
                 test_loss += loss.item()
                 test_graphs += 1
                 test_loss_summ[G.num_nodes][0] += loss.item()

@@ -142,12 +142,12 @@ def show_structure_mesh(G, writer=None, epoch=0):
     '''
     Shows mesh on top of image
     '''
-    path_to_image = 'data/new_poisson/'+str(G.data_idx[0])+'-v.npy'
-    values = np.load(path_to_image)
-    if len(values.shape) == 3 and values.shape[-1] not in [1,3]:
-      values = values[0] #multiple images
-    fig = plt.figure()
-    plt.imshow(values)
+    # path_to_image = 'data/new_poisson/'+str(G.data_idx[0])+'-v.npy'
+    # values = np.load(path_to_image)
+    # if len(values.shape) == 3 and values.shape[-1] not in [1,3]:
+    #   values = values[0] #multiple images
+    # fig = plt.figure()
+    # plt.imshow(values)
     Pos = G.pos.clone().detach().cpu().numpy()*100
     Edges = G.edge_index.clone().detach().cpu().numpy()
     lines = []
@@ -157,7 +157,7 @@ def show_structure_mesh(G, writer=None, epoch=0):
     lc = mc.LineCollection(lines, linewidths=3, colors='w')
     plt.gca().add_collection(lc)
     if writer is None:
-        plt.savefig('plots_poisson/res_'+structure['context_name']+'.png')
+        plt.savefig('plots_mnist/res_'+structure['context_name']+'.png')
     else:
         writer.add_figure('node_pos/'+str(G.num_nodes)+'/'+
                 str(G.data_idx[1])+'/'+str(G.data_idx[0]),
