@@ -241,14 +241,14 @@ for epoch in Tqdm(range(100), position=0):
         print(round(train_loss/(max_mesh_list_elts * train_size), 3),
             round(test_loss/(max_mesh_list_elts * test_size), 3))
     
-    print('train/loss-'+str(num**2),
-        train_loss_summ[num**2][0]/train_loss_summ[num**2][1],epoch)
+    # print('train/loss-'+str(num**2),
+        # train_loss_summ[num**2][0]/train_loss_summ[num**2][1],epoch)
     print('test/loss-'+str(num**2),
             test_loss_summ[num**2][0]/test_loss_summ[num**2][1],epoch)
 
 
-    print('train/accy-'+str(num**2),
-            train_accy_summ[num**2][0]/train_accy_summ[num**2][1],epoch)
+    # print('train/accy-'+str(num**2),
+            # train_accy_summ[num**2][0]/train_accy_summ[num**2][1],epoch)
     print('test/accy-'+str(num**2),
             test_accy_summ[num**2][0]/test_accy_summ[num**2][1],epoch)
 
