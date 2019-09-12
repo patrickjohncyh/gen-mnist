@@ -197,7 +197,6 @@ for epoch in Tqdm(range(100), position=0):
             train_graphs += 1
             preds = model(Inp, Q, G=G)
             if opt_nodes:
-                finetune_loss  = loss_fn(preds[:node_train],targets[:node_train])
                 # finetune_losses = [loss_fn(pred[:node_train],
                 #     target[:node_train]).unsqueeze(0)
                 #     for (pred, target) in zip(preds, targets)]
@@ -206,18 +205,21 @@ for epoch in Tqdm(range(100), position=0):
                 #     target[node_train:]).unsqueeze(0)
                 #     for (pred, target) in zip(preds, targets)]
                 # exec_loss = torch.sum(torch.cat(exec_losses))
-                exec_loss  = loss_fn(preds[node_train:],targets[node_train:])
-                finetune_loss.backward()
-                loss = exec_loss
+                if(preds.shape[0]>node_train):
+                    finetune_loss  = loss_fn(preds[:node_train],targets[:node_train])
+                    exec_loss  = loss_fn(preds[node_train:],targets[node_train:])
+                    finetune_loss.backward()
+                    loss = exec_loss
             else:
                 loss  = loss_fn(preds,targets)
-                accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/bs
+                accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/pred.shape[0]
                 test_accy_summ[G.num_nodes][0] += accy
                 test_accy_summ[G.num_nodes][1] += 1
-            test_loss += loss.item()
-            test_graphs += 1
-            test_loss_summ[G.num_nodes][0] += loss.item()
-            test_loss_summ[G.num_nodes][1] += 1
+            if(preds.shape[0]>node_train):    
+                test_loss += loss.item()
+                test_graphs += 1
+                test_loss_summ[G.num_nodes][0] += loss.item()
+                test_loss_summ[G.num_nodes][1] += 1
     opt.zero_grad() #Don't train Theta on finetune test set when optmizing nodes
     if mesh_opt is not None:
         mesh_opt.step()
