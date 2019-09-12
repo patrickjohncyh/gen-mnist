@@ -146,7 +146,7 @@ def show_structure_mesh(G, writer=None, epoch=0):
     # values = np.load(path_to_image)
     # if len(values.shape) == 3 and values.shape[-1] not in [1,3]:
     #   values = values[0] #multiple images
-    # fig = plt.figure()
+    fig = plt.figure()
     # plt.imshow(values)
     Pos = G.pos.clone().detach().cpu().numpy()*100
     Edges = G.edge_index.clone().detach().cpu().numpy()
