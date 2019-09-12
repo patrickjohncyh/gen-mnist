@@ -197,7 +197,7 @@ for epoch in Tqdm(range(100), position=0):
             train_graphs += 1
             preds = model(Inp, Q, G=G)
             if opt_nodes:
-                finetune_losses  = loss_fn(preds[:node_train],targets[:node_train])
+                finetune_loss  = loss_fn(preds[:node_train],targets[:node_train])
                 # finetune_losses = [loss_fn(pred[:node_train],
                 #     target[:node_train]).unsqueeze(0)
                 #     for (pred, target) in zip(preds, targets)]
@@ -206,7 +206,7 @@ for epoch in Tqdm(range(100), position=0):
                 #     target[node_train:]).unsqueeze(0)
                 #     for (pred, target) in zip(preds, targets)]
                 # exec_loss = torch.sum(torch.cat(exec_losses))
-                exec_losses  = loss_fn(preds[node_train:],targets[node_train:])
+                exec_loss  = loss_fn(preds[node_train:],targets[node_train:])
                 finetune_loss.backward()
                 loss = exec_loss
             else:
