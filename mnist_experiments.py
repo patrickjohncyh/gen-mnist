@@ -56,8 +56,8 @@ test_loader = DataLoader(test_dataset,  batch_size=bs, num_workers=8,
 # print(labels)
 # plt.imsave('mnist_test.png',images[0].numpy().squeeze(), cmap='gray_r');
 
-encoders = nn.ModuleList([Net(dims=[3,k,k,k])])
-decoders = nn.ModuleList([Net(dims=[k,k,10])])
+encoders = nn.ModuleList([Net(dims=[3,2*k,2*k,k])])
+decoders = nn.ModuleList([Net(dims=[k,2*k,2*k,10])])
 loss_fn = nn.CrossEntropyLoss()
 
 
