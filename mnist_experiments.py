@@ -233,10 +233,10 @@ for epoch in Tqdm(range(100), position=0):
         for num in sqrt_num_nodes_list:
             writer.add_scalar('test/loss-'+str(num**2),
                     test_loss_summ[num**2][0]/test_loss_summ[num**2][1],epoch)
-            if opt_nodes:
-                writer.add_scalar('pos_change-'+str(num**2),
-                        pos_change_summ[num**2][0]/pos_change_summ[num**2][1],
-                        epoch)
+            # if opt_nodes:
+            #     writer.add_scalar('pos_change-'+str(num**2),
+            #             pos_change_summ[num**2][0]/pos_change_summ[num**2][1],
+            #             epoch)
     else:
         print(round(train_loss/(max_mesh_list_elts * train_size), 3),
             round(test_loss/(max_mesh_list_elts * test_size), 3))
