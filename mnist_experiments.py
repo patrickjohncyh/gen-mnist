@@ -26,11 +26,11 @@ model_type = 'GENPlanarGrid' #['GENSoftNN', 'GENPlanarGrid', 'NP'][0]
 bs = 128
 k = 128
 node_train = 16
-sqrt_num_nodes_list = [5]#[4,3,4,5,6,7]
+sqrt_num_nodes_list = [3]#[4,3,4,5,6,7]
 copies_per_graph = 1
 opt_nodes = True
 slow_opt_nodes = False #Train node_pos only in part of each "house" data;slower
-do_tensorboard = True
+do_tensorboard = False
 # Changed the random initialization because GeneralizedHalton
 # doesn't install well on a Docker. We use another simple random initialization.
 
@@ -143,7 +143,7 @@ for epoch in Tqdm(range(100), position=0):
             else:
                 preds = model(Inp, Q, G=G)
                 loss  = loss_fn(preds,targets)
-                accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/bs
+                accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/preds.shape[0]
                 train_accy_summ[G.num_nodes][0] += accy
                 train_accy_summ[G.num_nodes][1] += 1
                 
@@ -175,6 +175,11 @@ for epoch in Tqdm(range(100), position=0):
             writer.add_scalar('train/loss-'+str(num**2),
                     train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
                     epoch)
+            print('EPOCH '+str(epoch)+'--- train/loss-'+str(num**2),
+                    train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
+                    epoch)
+    else:
+        for num in sqrt_num_nodes_list:
             print('EPOCH '+str(epoch)+'--- train/loss-'+str(num**2),
                     train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
                     epoch)
@@ -214,7 +219,7 @@ for epoch in Tqdm(range(100), position=0):
                     accy = exec_accy
             else:
                 loss  = loss_fn(preds,targets)
-                accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/pred.shape[0]
+                accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/preds.shape[0]
 
             if(preds.shape[0]>node_train):
                 test_accy_summ[G.num_nodes][0] += accy
@@ -238,20 +243,21 @@ for epoch in Tqdm(range(100), position=0):
             #             pos_change_summ[num**2][0]/pos_change_summ[num**2][1],
             #             epoch)
     else:
-        print(round(train_loss/(max_mesh_list_elts * train_size), 3),
-            round(test_loss/(max_mesh_list_elts * test_size), 3))
-    
-    print('train/loss-'+str(num**2),
+        print('train/loss-'+str(num**2),
         train_loss_summ[num**2][0]/train_loss_summ[num**2][1],epoch)
-    print('test/loss-'+str(num**2),
+        print('test/loss-'+str(num**2),
             test_loss_summ[num**2][0]/test_loss_summ[num**2][1],epoch)
 
 
-    print('train/accy-'+str(num**2),
+        print('train/accy-'+str(num**2),
             train_accy_summ[num**2][0]/train_accy_summ[num**2][1],epoch)
-    print('test/accy-'+str(num**2),
+        print('test/accy-'+str(num**2),
             test_accy_summ[num**2][0]/test_accy_summ[num**2][1],epoch)
 
+        # print(round(train_loss/(max_mesh_list_elts * train_size), 3),
+        #     round(test_loss/(max_mesh_list_elts * test_size), 3))
+    
+torch.save(model,'model-3x3-opt-nodes-e100m.pt')    
     # # Test Set
     # for cnt, ((Inp,Out),idx) in Tqdm(enumerate(test_loader), position=1):
     #     if cuda:
