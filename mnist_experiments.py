@@ -249,7 +249,7 @@ for epoch in Tqdm(range(1), position=0):
                             test_accy_summ[num**2][0]/test_accy_summ[num**2][1]))
 
 torch.save(model,'logs/3x3-no-opt-e100m-model.pt')
-torch.save(mesh_list,'logs3x3-no-opt-e100m-mesh-list.pt')
+torch.save(mesh_list,'logs/3x3-no-opt-e100m-mesh-list.pt')
 torch.save(mesh_params,'logs/3x3-no-opt-e100m-mesh-params.pt')   
-torch.save(loss_curves,'lgos/3x3-no-opt-e100m-loss-curves.pt')
+torch.save(loss_curves,'logs/3x3-no-opt-e100m-loss-curves.pt')
 torch.save(accy_curves,'logs/3x3-no-opt-ee100mm-accy-curves.pt')
