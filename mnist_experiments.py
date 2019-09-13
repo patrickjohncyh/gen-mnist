@@ -248,8 +248,8 @@ for epoch in Tqdm(range(1), position=0):
     accy_curves[num**2].append((train_accy_summ[num**2][0]/train_accy_summ[num**2][1],
                             test_accy_summ[num**2][0]/test_accy_summ[num**2][1]))
 
-torch.save(model,'3x3-no-opt-e100m-model.pt')
-torch.save(mesh_list,'3x3-no-opt-e100m-mesh-list.pt')
-torch.save(mesh_params,'3x3-no-opt-e100m-mesh-params.pt')   
-torch.save(loss_curves,'3x3-no-opt-e100m-loss-curves.pt')
-torch.save(accy_curves,'3x3-no-opt-ee100mm-accy-curves.pt')
+torch.save(model,'logs/3x3-no-opt-e100m-model.pt')
+torch.save(mesh_list,'logs3x3-no-opt-e100m-mesh-list.pt')
+torch.save(mesh_params,'logs/3x3-no-opt-e100m-mesh-params.pt')   
+torch.save(loss_curves,'lgos/3x3-no-opt-e100m-loss-curves.pt')
+torch.save(accy_curves,'logs/3x3-no-opt-ee100mm-accy-curves.pt')
