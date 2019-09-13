@@ -145,9 +145,9 @@ for epoch in Tqdm(range(1), position=0):
             else:
                 preds = model(Inp, Q, G=G)
                 loss  = loss_fn(preds,targets)
-                accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/preds.shape[0]
+                accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()
                 train_accy_summ[G.num_nodes][0] += accy
-                train_accy_summ[G.num_nodes][1] += 1
+                train_accy_summ[G.num_nodes][1] += preds.shape[0]
         
             loss.backward()
             train_loss += loss.item()
@@ -207,17 +207,19 @@ for epoch in Tqdm(range(1), position=0):
                 if(preds.shape[0]>node_train):
                     finetune_loss  = loss_fn(preds[:node_train],targets[:node_train])
                     exec_loss  = loss_fn(preds[node_train:],targets[node_train:])
-                    exec_accy  = ((torch.max(preds[node_train:],1)[1]-targets[node_train:])==0).sum().item()/preds[node_train:].shape[0]
+                    exec_accy  = ((torch.max(preds[node_train:],1)[1]-targets[node_train:])==0).sum().item()
                     finetune_loss.backward()
                     loss = exec_loss
                     accy = exec_accy
+                    accy_count = preds[node_train:].shape[0]
             else:
                 loss  = loss_fn(preds,targets)
                 accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/preds.shape[0]
+                accy_count = preds.shape[0]
 
             if(preds.shape[0]>node_train or opt_nodes==False):
                 test_accy_summ[G.num_nodes][0] += accy
-                test_accy_summ[G.num_nodes][1] += 1    
+                test_accy_summ[G.num_nodes][1] += accy_count   
                 test_loss += loss.item()
                 test_graphs += 1
                 test_loss_summ[G.num_nodes][0] += loss.item()
