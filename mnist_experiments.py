@@ -28,7 +28,7 @@ k = 128
 node_train = 16
 sqrt_num_nodes_list = [3]#[4,3,4,5,6,7]
 copies_per_graph = 1
-opt_nodes = True
+opt_nodes = False
 slow_opt_nodes = False #Train node_pos only in part of each "house" data;slower
 do_tensorboard = False
 # Changed the random initialization because GeneralizedHalton
@@ -81,7 +81,7 @@ else: writer = None
 
 
 
-coords = [(x/27.0,y/27.0) for x in range(0,28,1) for y in range(0,28,1)]
+coords = [(y/27.0,x/27.0) for y in range(0,28,1) for x in range(0,28,1)]
 coords = torch.Tensor(coords)
 if cuda:
     coords = coords.cuda()
@@ -89,10 +89,7 @@ if cuda:
 loss_curves = { num**2:[] for num in sqrt_num_nodes_list}
 accy_curves = { num**2:[] for num in sqrt_num_nodes_list}
 
-print(loss_curves[9])
-
-
-for epoch in Tqdm(range(1), position=0):
+for epoch in Tqdm(range(100), position=0):
     train_loss = 0. ;  test_loss = 0.
     train_graphs = 0 ; test_graphs = 0
     train_loss_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
@@ -214,7 +211,7 @@ for epoch in Tqdm(range(1), position=0):
                     accy_count = preds[node_train:].shape[0]
             else:
                 loss  = loss_fn(preds,targets)
-                accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/preds.shape[0]
+                accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()
                 accy_count = preds.shape[0]
 
             if(preds.shape[0]>node_train or opt_nodes==False):
