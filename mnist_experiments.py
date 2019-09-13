@@ -63,7 +63,7 @@ loss_fn = nn.CrossEntropyLoss()
 
 assert min(sqrt_num_nodes_list) >= 1
 model = GENPlanarGrid(encoders=encoders, decoders=decoders)
-
+#model = torch.load('model-3x3-opt-nodes-e100m.pt')
 mesh_list, mesh_params = create_mesh_list(
         num_datasets= 1,
         sqrt_num_nodes_list=sqrt_num_nodes_list,
@@ -71,7 +71,7 @@ mesh_list, mesh_params = create_mesh_list(
         copies_per_graph=copies_per_graph, device=device)
 max_mesh_list_elts = max([len(aux) for aux in mesh_list])
 if cuda: model.cuda()
-opt = torch.optim.Adam(params=model.parameters(), lr=3e-3)
+opt = torch.optim.Adam(params=model.parameters(), lr=3e-4)
 if len(mesh_params):
     mesh_opt = torch.optim.Adam(params=mesh_params, lr=3e-4)
 else: mesh_opt = None
@@ -86,7 +86,7 @@ coords = torch.Tensor(coords)
 if cuda:
     coords = coords.cuda()
 
-for epoch in Tqdm(range(100), position=0):
+for epoch in Tqdm(range(50), position=0):
     train_loss = 0. ;  test_loss = 0.
     train_graphs = 0 ; test_graphs = 0
     train_loss_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
@@ -221,7 +221,7 @@ for epoch in Tqdm(range(100), position=0):
                 loss  = loss_fn(preds,targets)
                 accy  = ((torch.max(preds,1)[1]-targets)==0).sum().item()/preds.shape[0]
 
-            if(preds.shape[0]>node_train):
+            if(preds.shape[0]>node_train or opt_nodes==False):
                 test_accy_summ[G.num_nodes][0] += accy
                 test_accy_summ[G.num_nodes][1] += 1    
                 test_loss += loss.item()
@@ -257,7 +257,9 @@ for epoch in Tqdm(range(100), position=0):
         # print(round(train_loss/(max_mesh_list_elts * train_size), 3),
         #     round(test_loss/(max_mesh_list_elts * test_size), 3))
     
-torch.save(model,'model-3x3-opt-nodes-e100m.pt')    
+torch.save(model,'model-3x3-opt-nodes-e50m.pt')
+torch.save(mesh_list,'mesh-list-3x3-opt-nodes-e50m.pt')
+torch.save(mesh_params,'mesh-params-3x3-opt-nodes-e50m.pt')    
     # # Test Set
     # for cnt, ((Inp,Out),idx) in Tqdm(enumerate(test_loader), position=1):
     #     if cuda:
