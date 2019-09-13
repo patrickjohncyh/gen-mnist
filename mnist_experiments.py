@@ -257,10 +257,10 @@ for epoch in Tqdm(range(1), position=0):
         print('test/accy-'+str(num**2),
             test_accy_summ[num**2][0]/test_accy_summ[num**2][1],epoch)
 
-        loss_curves[num][0][epoch]=(train_loss_summ[num**2][0]/train_loss_summ[num**2][1])
-        loss_curves[num][1][epoch]=(test_loss_summ[num**2][0]/test_loss_summ[num**2][1])
-        accy_curves[num][0][epoch]=(train_accy_summ[num**2][0]/train_accy_summ[num**2][1])
-        accy_curves[num][1][epoch]=(test_accy_summ[num**2][0]/test_accy_summ[num**2][1])
+        loss_curves[num**2][0][epoch]=(train_loss_summ[num**2][0]/train_loss_summ[num**2][1])
+        loss_curves[num**2][1][epoch]=(test_loss_summ[num**2][0]/test_loss_summ[num**2][1])
+        accy_curves[num**2][0][epoch]=(train_accy_summ[num**2][0]/train_accy_summ[num**2][1])
+        accy_curves[num**2][1][epoch]=(test_accy_summ[num**2][0]/test_accy_summ[num**2][1])
 
         # print(round(train_loss/(max_mesh_list_elts * train_size), 3),
         #     round(test_loss/(max_mesh_list_elts * test_size), 3))
