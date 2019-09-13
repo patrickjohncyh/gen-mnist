@@ -89,7 +89,7 @@ if cuda:
 loss_curves = { num**2:[] for num in sqrt_num_nodes_list}
 accy_curves = { num**2:[] for num in sqrt_num_nodes_list}
 
-print(loss_cruves[9])
+print(loss_curves[9])
 
 
 for epoch in Tqdm(range(1), position=0):
@@ -260,10 +260,10 @@ for epoch in Tqdm(range(1), position=0):
         print('test/accy-'+str(num**2),
             test_accy_summ[num**2][0]/test_accy_summ[num**2][1],epoch)
 
-    loss_curves[num**2].append((train_loss_summ[num**2][0]/train_loss_summ[num**2][1]),
-                            (test_loss_summ[num**2][0]/test_loss_summ[num**2][1]))
-    accy_curves[num**2].append((train_accy_summ[num**2][0]/train_accy_summ[num**2][1]),
-                            (test_accy_summ[num**2][0]/test_accy_summ[num**2][1]))
+    loss_curves[num**2].append((train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
+                            test_loss_summ[num**2][0]/test_loss_summ[num**2][1]))
+    accy_curves[num**2].append((train_accy_summ[num**2][0]/train_accy_summ[num**2][1],
+                            test_accy_summ[num**2][0]/test_accy_summ[num**2][1]))
 
         # print(round(train_loss/(max_mesh_list_elts * train_size), 3),
         #     round(test_loss/(max_mesh_list_elts * test_size), 3))
