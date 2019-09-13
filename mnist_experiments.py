@@ -86,7 +86,10 @@ coords = torch.Tensor(coords)
 if cuda:
     coords = coords.cuda()
 
-for epoch in Tqdm(range(50), position=0):
+loss_curves = { [0,0]  for num in sqrt_num_nodes_list}
+accy_curves = { [0,0]  for num in sqrt_num_nodes_list}
+
+for epoch in Tqdm(range(1), position=0):
     train_loss = 0. ;  test_loss = 0.
     train_graphs = 0 ; test_graphs = 0
     train_loss_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
@@ -254,12 +257,19 @@ for epoch in Tqdm(range(50), position=0):
         print('test/accy-'+str(num**2),
             test_accy_summ[num**2][0]/test_accy_summ[num**2][1],epoch)
 
+        loss_curves[num][0].append(train_loss_summ[num**2][0]/train_loss_summ[num**2][1])
+        loss_curves[num][1].append(test_loss_summ[num**2][0]/test_loss_summ[num**2][1])
+        accy_curves[num][0].append(train_accy_summ[num**2][0]/train_accy_summ[num**2][1])
+        accy_curves[num][1].append(test_accy_summ[num**2][0]/test_accy_summ[num**2][1])
+
         # print(round(train_loss/(max_mesh_list_elts * train_size), 3),
         #     round(test_loss/(max_mesh_list_elts * test_size), 3))
     
 torch.save(model,'model-3x3-opt-nodes-e50m.pt')
 torch.save(mesh_list,'mesh-list-3x3-opt-nodes-e50m.pt')
-torch.save(mesh_params,'mesh-params-3x3-opt-nodes-e50m.pt')    
+torch.save(mesh_params,'mesh-params-3x3-opt-nodes-e50m.pt')   
+print(loss_curves)
+print(accy_curves) 
     # # Test Set
     # for cnt, ((Inp,Out),idx) in Tqdm(enumerate(test_loader), position=1):
     #     if cuda:
