@@ -26,7 +26,7 @@ model_type = 'GENPlanarGrid' #['GENSoftNN', 'GENPlanarGrid', 'NP'][0]
 bs = 128
 k = 128
 node_train = 16
-sqrt_num_nodes_list = [3]#[4,3,4,5,6,7]
+sqrt_num_nodes_list = [4]#[4,3,4,5,6,7]
 copies_per_graph = 1
 opt_nodes = False
 slow_opt_nodes = False #Train node_pos only in part of each "house" data;slower
@@ -62,8 +62,8 @@ loss_fn = nn.CrossEntropyLoss()
 
 
 assert min(sqrt_num_nodes_list) >= 1
-model = GENPlanarGrid(encoders=encoders, decoders=decoders)
-#model = torch.load('model-3x3-opt-nodes-e100m.pt')
+#model = GENPlanarGrid(encoders=encoders, decoders=decoders)
+model = torch.load('logs/4x4-no-opt-e100m-model.pt')
 mesh_list, mesh_params = create_mesh_list(
         num_datasets= 1,
         sqrt_num_nodes_list=sqrt_num_nodes_list,
@@ -71,7 +71,7 @@ mesh_list, mesh_params = create_mesh_list(
         copies_per_graph=copies_per_graph, device=device)
 max_mesh_list_elts = max([len(aux) for aux in mesh_list])
 if cuda: model.cuda()
-opt = torch.optim.Adam(params=model.parameters(), lr=3e-4)
+opt = torch.optim.Adam(params=model.parameters(), lr=3e-5)
 if len(mesh_params):
     mesh_opt = torch.optim.Adam(params=mesh_params, lr=3e-4)
 else: mesh_opt = None
@@ -89,7 +89,7 @@ if cuda:
 loss_curves = { num**2:[] for num in sqrt_num_nodes_list}
 accy_curves = { num**2:[] for num in sqrt_num_nodes_list}
 
-for epoch in Tqdm(range(100), position=0):
+for epoch in Tqdm(range(50), position=0):
     train_loss = 0. ;  test_loss = 0.
     train_graphs = 0 ; test_graphs = 0
     train_loss_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
@@ -232,23 +232,24 @@ for epoch in Tqdm(range(100), position=0):
             writer.add_scalar('test/loss-'+str(num**2),
                     test_loss_summ[num**2][0]/test_loss_summ[num**2][1],epoch)
     else:
-        print('train/loss-'+str(num**2),
-        train_loss_summ[num**2][0]/train_loss_summ[num**2][1],epoch)
-        print('test/loss-'+str(num**2),
-            test_loss_summ[num**2][0]/test_loss_summ[num**2][1],epoch)
+        for num in sqrt_num_nodes_list:
+            print('train/loss-'+str(num**2),
+                train_loss_summ[num**2][0]/train_loss_summ[num**2][1],epoch)
+            print('test/loss-'+str(num**2),
+                test_loss_summ[num**2][0]/test_loss_summ[num**2][1],epoch)
 
-        print('train/accy-'+str(num**2),
-            train_accy_summ[num**2][0]/train_accy_summ[num**2][1],epoch)
-        print('test/accy-'+str(num**2),
-            test_accy_summ[num**2][0]/test_accy_summ[num**2][1],epoch)
+            print('train/accy-'+str(num**2),
+                train_accy_summ[num**2][0]/train_accy_summ[num**2][1],epoch)
+            print('test/accy-'+str(num**2),
+                test_accy_summ[num**2][0]/test_accy_summ[num**2][1],epoch)
 
-    loss_curves[num**2].append((train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
+        loss_curves[num**2].append((train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
                             test_loss_summ[num**2][0]/test_loss_summ[num**2][1]))
-    accy_curves[num**2].append((train_accy_summ[num**2][0]/train_accy_summ[num**2][1],
+        accy_curves[num**2].append((train_accy_summ[num**2][0]/train_accy_summ[num**2][1],
                             test_accy_summ[num**2][0]/test_accy_summ[num**2][1]))
 
-torch.save(model,'logs/3x3-no-opt-e100m-model.pt')
-torch.save(mesh_list,'logs/3x3-no-opt-e100m-mesh-list.pt')
-torch.save(mesh_params,'logs/3x3-no-opt-e100m-mesh-params.pt')   
-torch.save(loss_curves,'logs/3x3-no-opt-e100m-loss-curves.pt')
-torch.save(accy_curves,'logs/3x3-no-opt-ee100mm-accy-curves.pt')
+torch.save(model,'logs/4x4-no-opt-e200m-model.pt')
+torch.save(mesh_list,'logs/4x4-no-opt-e200m-mesh-list.pt')
+torch.save(mesh_params,'logs/4x4-no-opt-e200m-mesh-params.pt')   
+torch.save(loss_curves,'logs/4x4-no-opt-e200m-loss-curves.pt')
+torch.save(accy_curves,'logs/4x4-no-opt-e200m-accy-curves.pt')
