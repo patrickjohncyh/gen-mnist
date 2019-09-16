@@ -48,38 +48,31 @@ train_loader = DataLoader(train_dataset, batch_size=bs, num_workers=8,
 test_loader = DataLoader(test_dataset,  batch_size=bs, num_workers=8,
         shuffle=True, drop_last=False)
 
-## Data Visualisation
-# dataiter = iter(train_loader)
-# images, labels = dataiter.next()
-# print(images.shape)
-# print(labels.shape)
-# print(labels)
-# plt.imsave('mnist_test.png',images[0].numpy().squeeze(), cmap='gray_r');
-
 encoders = nn.ModuleList([Net(dims=[3,2*k,2*k,k])])
 decoders = nn.ModuleList([Net(dims=[k,2*k,2*k,10])])
 loss_fn = nn.CrossEntropyLoss()
 
 
 assert min(sqrt_num_nodes_list) >= 1
-#model = GENPlanarGrid(encoders=encoders, decoders=decoders)
-model = torch.load('logs/4x4-no-opt-e100m-model.pt')
+model = GENPlanarGrid(encoders=encoders, decoders=decoders)
+# model = torch.load('logs/4x4-no-opt-e100m-model.pt')
+
 mesh_list, mesh_params = create_mesh_list(
         num_datasets= 1,
         sqrt_num_nodes_list=sqrt_num_nodes_list,
         initialization='random' if opt_nodes else 'uniform',
         copies_per_graph=copies_per_graph, device=device)
+# mesh_list,mesh_params = (torch.load('logs/2x2-opt-e100m-mesh-list.pt'),
+#                          torch.load('logs/2x2-opt-e100m-mesh-params.pt'))
 max_mesh_list_elts = max([len(aux) for aux in mesh_list])
 if cuda: model.cuda()
-opt = torch.optim.Adam(params=model.parameters(), lr=3e-5)
+opt = torch.optim.Adam(params=model.parameters(), lr=3e-4)
 if len(mesh_params):
     mesh_opt = torch.optim.Adam(params=mesh_params, lr=3e-4)
 else: mesh_opt = None
 
 if do_tensorboard: writer = SummaryWriter()
 else: writer = None
-
-
 
 coords = [(y/27.0,x/27.0) for y in range(0,28,1) for x in range(0,28,1)]
 coords = torch.Tensor(coords)
@@ -89,7 +82,7 @@ if cuda:
 loss_curves = { num**2:[] for num in sqrt_num_nodes_list}
 accy_curves = { num**2:[] for num in sqrt_num_nodes_list}
 
-for epoch in Tqdm(range(50), position=0):
+for epoch in Tqdm(range(100), position=0):
     train_loss = 0. ;  test_loss = 0.
     train_graphs = 0 ; test_graphs = 0
     train_loss_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
@@ -99,7 +92,6 @@ for epoch in Tqdm(range(50), position=0):
     train_accy_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
     test_accy_summ = {num**2:[0,0] for num in sqrt_num_nodes_list}
     
-
     # Train Set
     for g_idx in (range(max_mesh_list_elts)):
         idx = 0
@@ -158,31 +150,12 @@ for epoch in Tqdm(range(50), position=0):
             opt.step()
             opt.zero_grad()
             num = sqrt_num_nodes_list[g_idx]
-            # if (cnt % 32 == 32-1) or (cnt == len(train_loader)-1):
-            #     print('')
-            #     print('train/loss-'+str(num**2),
-            #         train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
-            #         (cnt+1))
-            #     print('train/accy-'+str(num**2),
-            #         train_accy_summ[num**2][0]/train_accy_summ[num**2][1],
-            #         (cnt+1))
 
     if do_tensorboard:
         for num in sqrt_num_nodes_list:
             writer.add_scalar('train/loss-'+str(num**2),
                     train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
                     epoch)
-            print('Epoch '+str(epoch)+'--- train/loss-'+str(num**2),
-                    train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
-                    epoch)
-    else:
-        pass
-        # for num in sqrt_num_nodes_list:
-        #     continue
-            # print('Epoch '+str(epoch)+'--- train/loss-'+str(num**2),
-            #         train_loss_summ[num**2][0]/train_loss_summ[num**2][1],
-            #         epoch)
-
 
     # Test Set
     for g_idx in Tqdm(range(max_mesh_list_elts), position=1):
@@ -248,8 +221,8 @@ for epoch in Tqdm(range(50), position=0):
         accy_curves[num**2].append((train_accy_summ[num**2][0]/train_accy_summ[num**2][1],
                             test_accy_summ[num**2][0]/test_accy_summ[num**2][1]))
 
-torch.save(model,'logs/4x4-no-opt-e200m-model.pt')
-torch.save(mesh_list,'logs/4x4-no-opt-e200m-mesh-list.pt')
-torch.save(mesh_params,'logs/4x4-no-opt-e200m-mesh-params.pt')   
-torch.save(loss_curves,'logs/4x4-no-opt-e200m-loss-curves.pt')
-torch.save(accy_curves,'logs/4x4-no-opt-e200m-accy-curves.pt')
+torch.save(model,'logs/2x2-opt-e100m-model.pt')
+torch.save(mesh_list,'logs/2x2-opt-e100m-mesh-list.pt')
+torch.save(mesh_params,'logs/2x2-opt-e100m-mesh-params.pt')   
+torch.save(loss_curves,'logs/2x2-opt-e100m-loss-curves.pt')
+torch.save(accy_curves,'logs/2x2-opt-e100m-accy-curves.pt')

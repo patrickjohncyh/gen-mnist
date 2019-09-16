@@ -60,16 +60,9 @@ class GEN(nn.Module):
         bs = Inp.shape[0]
         nc = coords.shape[0] # num_coords
 
-        # for inp in Inp:
-        #     res = torch.cat((inp[0], inp[1]), dim=-1)
-        #     inputs.append(res)
-        # inputs = torch.cat([i.view(1,3) for i in inputs],dim=0).view(-1,784,3)
-
         inputs = torch.cat((Inp.view(-1,nc,1),coords.repeat(bs,1).view(bs,-1,2)),2)
         inputs = enc(inputs)
 
-        # inputs = torch.cat([inp.view(self.encoders[0].layers[-1].out_features,1) for inp in inputs], dim=1)
-        # x_inp = torch.cat([inp[0].view(2,1) for inp in Inp], dim=1).view(bs,2,-1)
         x_inp = torch.t(coords)
 
         # Initialize GNN node states with representation function
@@ -84,8 +77,6 @@ class GEN(nn.Module):
         
         SG = Batch.from_data_list(data_list)
 
-        
-
         # Propagate GNN states with message passing
         for step in range(msg_steps):
             SG.x = self.layer_norm(SG.x + self.conv(
@@ -99,15 +90,6 @@ class GEN(nn.Module):
         dec = self.decoders[0]
         res = dec(mean_feat_vec)
         return res
-
-        # # queries = [] #(BS, #out, feat)
-        # # # Decode hidden states to final outputs
-        # # res = []
-        # # for (q, dec) in zip(Q, self.decoders):
-        # #     q_coord = self.repr_fn(G.pos, q, **repr_fn_args)
-        # #     lat = torch.bmm(q_coord, G.x)
-        # #     res.append(dec(torch.cat((lat, q), dim=-1)))
-        # # return res
 
     def repr_fn(self, **kwargs):
         raise NotImplementedError("the default GEN class doesn't have \
