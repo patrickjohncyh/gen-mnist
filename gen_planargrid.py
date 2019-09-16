@@ -60,7 +60,7 @@ class GENPlanarGrid(GEN):
         scores.scatter_(dim=1, index=torch.unsqueeze(top_right_idx, dim=1),
                         src=torch.unsqueeze(top_right_score, dim=1))
 
-        return scores.reshape((bs, 784, -1))
+        return scores.reshape((bs, features, -1))
 
     def forward(self, Inp, Q, G=None, msg_steps=None, repr_fn_args={}):
         if G is not None: self.set_grid_info(G.grid)
