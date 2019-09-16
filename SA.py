@@ -53,7 +53,7 @@ loss_fn = nn.CrossEntropyLoss()
 
 assert min(sqrt_num_nodes_list) >= 1
 # model = GENPlanarGrid(encoders=encoders, decoders=decoders)
-model = torch.load('/content/gen-mnist/logs/2x2-no-opt-e200m-model.pt')
+model = torch.load('logs/2x2-no-opt-e200m-model.pt')
 mesh_list, mesh_params = create_mesh_list(
         num_datasets= 1,
         sqrt_num_nodes_list=sqrt_num_nodes_list,
@@ -130,7 +130,7 @@ def acceptance_probability(old_cost,new_cost,T):
   return np.exp(-(new_cost.item()-old_cost.item())/T)
  
 def SA(sol): 
-  T =  0.01
+  T =  0.1
   T_min = 0.0001
   alpha = 0.9
   opt_val_sol = None
@@ -177,6 +177,6 @@ def SA(sol):
 
   return(opt_val_sol,opt_val_accy)
 
-  # SA(sol)
-  print(val(sol))
+#SA(sol)
+print(val(sol))
   
